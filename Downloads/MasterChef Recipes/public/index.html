@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>MasterChef Recipe Tracker</title>
+
+  <style>
+    :root {
+      --cream: #fff8ef;
+      --paper: #fffdf8;
+      --ink: #2f241f;
+      --muted: #7a6c63;
+      --tomato: #ef5b3f;
+      --tomato-dark: #cf442d;
+      --saffron: #f3b23f;
+      --sage: #6e8f72;
+      --sage-dark: #557158;
+      --plum: #7d4961;
+      --border: #ecdccf;
+      --soft-orange: #fff0df;
+      --soft-green: #edf5ee;
+      --soft-pink: #faedf2;
+      --shadow: 0 10px 30px rgba(82, 52, 34, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(243,178,63,.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(239,91,63,.10), transparent 24%),
+        linear-gradient(180deg, #fffaf3 0%, #f8f2eb 100%);
+      color: var(--ink);
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin: 28px auto 48px;
+    }
+
+    h1, h2, h3 {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 46px);
+      margin: 0 0 8px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    h1::before {
+      content: "🍳 ";
+      font-size: .9em;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 19px;
+      margin-bottom: 8px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-top: -2px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 370px minmax(0,1fr);
+      gap: 24px;
+      align-items: start;
+      margin-top: 22px;
+    }
+
+    .card,
+    .ranking-item,
+    .ingredient-item {
+      background: rgba(255,253,248,.95);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .card h2::after {
+      content: "";
+      display: block;
+      width: 54px;
+      height: 4px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--tomato), var(--saffron));
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 13px;
+      color: #4f4038;
+    }
+
+    input, select {
+      width: 100%;
+      min-width: 0;
+      margin-top: 6px;
+      padding: 12px 13px;
+      border: 1px solid #dcc9bb;
+      border-radius: 13px;
+      font-size: 16px;
+      background: #fffefa;
+      color: var(--ink);
+      transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--tomato);
+      box-shadow: 0 0 0 4px rgba(239,91,63,.12);
+    }
+
+    input::placeholder {
+      color: #aa9a8f;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 13px;
+      padding: 12px 15px;
+      font-size: 15px;
+      font-weight: 800;
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      width: 100%;
+      color: white;
+      background: linear-gradient(135deg, var(--tomato), #f47a43);
+      box-shadow: 0 8px 18px rgba(239,91,63,.22);
+    }
+
+    .primary:hover {
+      background: linear-gradient(135deg, var(--tomato-dark), var(--tomato));
+    }
+
+    .secondary {
+      background: var(--soft-orange);
+      color: #7d4b24;
+      border: 1px solid #f2d0ae;
+    }
+
+    .danger {
+      background: #fde6e2;
+      color: #a63624;
+      padding: 8px 11px;
+      font-size: 13px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 8px;
+      margin-top: 20px;
+      border-top: 1px dashed #dfcdbf;
+      padding-top: 16px;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 10px 4px;
+      border-radius: 14px;
+      background: #fff9f2;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      color: var(--tomato);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .stat span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .toolbar select {
+      min-width: 220px;
+    }
+
+    .ranking-item,
+    .ingredient-item {
+      padding: 16px;
+      margin-bottom: 13px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ranking-item::before,
+    .ingredient-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--tomato), var(--saffron));
+    }
+
+    .ranking-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .pct {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--plum);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .bar {
+      margin-top: 11px;
+      height: 9px;
+      background: #f0e7df;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar > div {
+      height: 100%;
+      background: linear-gradient(90deg, var(--sage), var(--saffron), var(--tomato));
+    }
+
+    .chip {
+      display: inline-block;
+      margin: 5px 7px 0 0;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--soft-green);
+      color: #48634c;
+      border: 1px solid #d5e7d6;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    button.chip {
+      background: var(--soft-pink);
+      color: var(--plum);
+      border: 1px solid #edd6e0;
+    }
+
+    .suggestion-grid {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .suggestion-box {
+      background: linear-gradient(180deg, #fffaf4, #fff5e9);
+      border: 1px solid #eed9c7;
+      border-radius: 16px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .suggestion-box strong {
+      color: #6f472d;
+    }
+
+    .section-gap {
+      margin-top: 24px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 14px;
+      max-width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      background: #fffefa;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 11px;
+      border-bottom: 1px solid #eee1d7;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #6f5d52;
+      background: #fff4e8;
+      font-weight: 800;
+    }
+
+    tbody tr:hover {
+      background: #fffaf4;
+    }
+
+    .message {
+      min-height: 20px;
+      font-size: 14px;
+      color: var(--sage-dark);
+      margin: 9px 0 0;
+      font-weight: 700;
+    }
+
+    #ingredientExplorer h3::before {
+      content: "✨ ";
+    }
+
+    @media (max-width: 800px) {
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(243,178,63,.15), transparent 26%),
+          linear-gradient(180deg, #fffaf3 0%, #f8f2eb 100%);
+      }
+
+      .container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 14px;
+      }
+
+      .grid {
+        display: block;
+        width: 100%;
+      }
+
+      .grid > section {
+        width: 100%;
+        min-width: 0;
+        margin-bottom: 20px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 100%;
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      .toolbar {
+        display: block;
+      }
+
+      .toolbar label {
+        width: 100%;
+        margin-top: 12px;
+      }
+
+      .toolbar select {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .suggestion-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ranking-head {
+        align-items: flex-start;
+      }
+
+      .pct {
+        font-size: 21px;
+        white-space: nowrap;
+      }
+
+      .table-wrap {
+        width: 100%;
+        overflow: visible;
+      }
+
+      table {
+        width: 100%;
+        min-width: 0;
+        background: transparent;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody, tr, td {
+        display: block;
+        width: 100%;
+      }
+
+      tr {
+        background: #fffefa;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        margin-bottom: 12px;
+        padding: 13px;
+        box-shadow: 0 6px 18px rgba(82, 52, 34, 0.06);
+      }
+
+      td {
+        border: 0;
+        padding: 5px 0;
+      }
+
+      td:nth-child(1) {
+        font-size: 17px;
+        margin-bottom: 6px;
+        color: var(--plum);
+      }
+
+      td:nth-child(2)::before { content: "Season: "; font-weight: 800; color: #6f5d52; }
+      td:nth-child(3)::before { content: "Episode: "; font-weight: 800; color: #6f5d52; }
+      td:nth-child(4)::before { content: "Challenge: "; font-weight: 800; color: #6f5d52; }
+      td:nth-child(5)::before { content: "Ingredient: "; font-weight: 800; color: #6f5d52; }
+      td:nth-child(6)::before { content: "Category: "; font-weight: 800; color: #6f5d52; }
+
+      td:last-child {
+        margin-top: 8px;
+      }
+
+      .danger {
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 30px;
+        margin-top: 8px;
+      }
+
+      h2 {
+        font-size: 21px;
+      }
+
+      .stats {
+        gap: 5px;
+      }
+
+      .stat strong {
+        font-size: 21px;
+      }
+
+      .chip {
+        max-width: 100%;
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>MasterChef Recipe Tracker</h1>
+  <p class="sub">Track repeated dishes, challenge types, and what contestants make from the same Mystery Box ingredient.</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Add appearance</h2>
+      <form id="recipeForm">
+        <label>
+          Recipe / Dish Name
+          <input id="recipeName" type="text" placeholder="e.g. Chocolate Fondant" required />
+        </label>
+
+        <div class="row">
+          <label>Season<input id="season" type="number" min="1" value="1" required /></label>
+          <label>Episode<input id="episode" type="number" min="1" value="1" required /></label>
+        </div>
+
+        <label>
+          Challenge Type
+          <select id="challenge">
+            <option>Mystery Box</option>
+            <option>Pressure Test</option>
+            <option>Invention Test</option>
+            <option>Team Challenge</option>
+            <option>Immunity Challenge</option>
+            <option>Elimination Challenge</option>
+            <option>Service Challenge</option>
+            <option>MasterClass</option>
+            <option>Other</option>
+          </select>
+        </label>
+
+        <label>
+          Mystery Box Ingredient
+          <input id="ingredient" type="text" placeholder="e.g. Chocolate, Salmon, Mushroom" />
+        </label>
+
+        <label>
+          Food Category
+          <select id="category">
+            <option value="">Uncategorised</option>
+            <option>Main</option>
+            <option>Dessert</option>
+            <option>Baking</option>
+            <option>Pasta</option>
+            <option>Seafood</option>
+            <option>Meat</option>
+            <option>Vegetarian</option>
+            <option>Sauce / Technique</option>
+          </select>
+        </label>
+
+        <button class="primary" type="submit">Add Recipe Appearance</button>
+        <p class="message" id="message"></p>
+      </form>
+
+      <div class="stats">
+        <div class="stat"><strong id="appearanceCount">0</strong><span>appearances</span></div>
+        <div class="stat"><strong id="recipeCount">0</strong><span>unique dishes</span></div>
+        <div class="stat"><strong id="seasonCount">0</strong><span>seasons</span></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="toolbar">
+        <div>
+          <h2>Most Repeated Recipes</h2>
+          <p class="sub">Percentage = share of recipe appearances in the selected challenge.</p>
+        </div>
+        <label>
+          Challenge Filter
+          <select id="challengeFilter">
+            <option value="all">All challenges</option>
+            <option>Mystery Box</option>
+            <option>Pressure Test</option>
+            <option>Invention Test</option>
+            <option>Team Challenge</option>
+            <option>Immunity Challenge</option>
+            <option>Elimination Challenge</option>
+            <option>Service Challenge</option>
+            <option>MasterClass</option>
+            <option>Other</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="ranking"></div>
+
+      <div class="card section-gap">
+        <h2>Ingredient Explorer</h2>
+        <p class="sub">Search a Mystery Box ingredient to see what contestants have made from it and get offline dish ideas.</p>
+        <label>
+          Ingredient
+          <input id="ingredientSearch" type="text" placeholder="Try chocolate, salmon, mushroom..." />
+        </label>
+        <div id="ingredientExplorer"></div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="toolbar">
+          <div>
+            <h2>Appearance Log</h2>
+            <p class="sub">Your entries are saved on this device.</p>
+          </div>
+          <button class="secondary" id="clearAll" type="button">Clear All</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dish</th><th>Season</th><th>Episode</th><th>Challenge</th><th>Ingredient</th><th>Category</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "masterchefRecipeTrackerEntriesV2";
+
+  const IDEA_LIBRARY = {
+    chocolate: {
+      dishes: ["Chocolate fondant","Chocolate soufflé","Chocolate mousse","Chocolate tart","Chocolate ganache cake","Chocolate parfait"],
+      pairs: ["Coffee","Orange","Raspberry","Hazelnut","Caramel","Vanilla"]
+    },
+    salmon: {
+      dishes: ["Pan-seared salmon","Salmon en croûte","Salmon tartare","Salmon roulade","Salmon with beurre blanc","Salmon ceviche"],
+      pairs: ["Lemon","Dill","Fennel","Capers","Peas","Potato"]
+    },
+    mushroom: {
+      dishes: ["Mushroom risotto","Mushroom ravioli","Mushroom duxelles","Mushroom tart","Creamy mushroom pasta","Stuffed mushrooms"],
+      pairs: ["Thyme","Garlic","Parmesan","Cream","Truffle","Beef"]
+    },
+    chicken: {
+      dishes: ["Chicken roulade","Chicken ballotine","Roast chicken","Chicken pie","Chicken terrine","Chicken with jus"],
+      pairs: ["Thyme","Garlic","Lemon","Mushroom","Mustard","Tarragon"]
+    },
+    potato: {
+      dishes: ["Potato gratin","Pommes purée","Potato fondant","Gnocchi","Rösti","Duchess potatoes"],
+      pairs: ["Butter","Rosemary","Garlic","Cream","Parmesan","Leek"]
+    },
+    apple: {
+      dishes: ["Apple tarte tatin","Apple crumble","Apple soufflé","Apple pie","Apple parfait","Caramelised apple"],
+      pairs: ["Cinnamon","Caramel","Vanilla","Pork","Walnut","Calvados"]
+    },
+    lemon: {
+      dishes: ["Lemon tart","Lemon curd","Lemon posset","Lemon soufflé","Lemon beurre blanc","Preserved lemon risotto"],
+      pairs: ["Salmon","Chicken","Thyme","Butter","Berries","Garlic"]
+    }
+  };
+
+  let entries = loadEntries();
+
+  function loadEntries() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+
+      const old = localStorage.getItem("masterchefRecipeTrackerEntries");
+      return old ? JSON.parse(old).map(e => ({...e, ingredient: e.ingredient || ""})) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveEntries() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function norm(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function renderRanking() {
+    const filter = document.getElementById("challengeFilter").value;
+    const visible = filter === "all" ? entries : entries.filter(e => e.challenge === filter);
+    const groups = {};
+
+    visible.forEach(e => {
+      const key = norm(e.name);
+      if (!groups[key]) groups[key] = {name:e.name,count:0};
+      groups[key].count++;
+    });
+
+    const ranking = Object.values(groups).sort((a,b)=>b.count-a.count || a.name.localeCompare(b.name));
+    const el = document.getElementById("ranking");
+
+    el.innerHTML = ranking.length ? ranking.map((item,index)=>{
+      const pct = visible.length ? item.count / visible.length * 100 : 0;
+      return `
+        <div class="ranking-item">
+          <div class="ranking-head">
+            <div>
+              <strong>#${index+1} ${escapeHtml(item.name)}</strong>
+              <div class="muted">${item.count} appearance${item.count===1?"":"s"}</div>
+            </div>
+            <div class="pct">${pct.toFixed(1)}%</div>
+          </div>
+          <div class="bar"><div style="width:${pct}%"></div></div>
+        </div>`;
+    }).join("") : `<div class="card"><p class="muted">No recipes logged yet for this challenge.</p></div>`;
+  }
+
+  function renderExplorer() {
+    const search = norm(document.getElementById("ingredientSearch").value);
+    const el = document.getElementById("ingredientExplorer");
+
+    if (!search) {
+      const ingredientCounts = {};
+      entries.filter(e => norm(e.ingredient)).forEach(e => {
+        const key = norm(e.ingredient);
+        if (!ingredientCounts[key]) ingredientCounts[key] = {name:e.ingredient,count:0,dishes:new Set()};
+        ingredientCounts[key].count++;
+        ingredientCounts[key].dishes.add(e.name);
+      });
+
+      const top = Object.values(ingredientCounts).sort((a,b)=>b.count-a.count).slice(0,6);
+
+      el.innerHTML = top.length
+        ? `<p class="muted">Ingredients you've tracked:</p>` + top.map(x =>
+          `<button type="button" class="chip ingredient-chip" data-ingredient="${escapeHtml(x.name)}">${escapeHtml(x.name)} · ${x.dishes.size} dish${x.dishes.size===1?"":"es"}</button>`
+        ).join("")
+        : `<p class="muted">Add a Mystery Box ingredient to an entry, then search it here.</p>`;
+      return;
+    }
+
+    const matches = entries.filter(e => norm(e.ingredient) === search);
+    const dishGroups = {};
+    matches.forEach(e => {
+      const k = norm(e.name);
+      if (!dishGroups[k]) dishGroups[k] = {name:e.name,count:0,seasons:new Set()};
+      dishGroups[k].count++;
+      dishGroups[k].seasons.add(e.season);
+    });
+    const tracked = Object.values(dishGroups).sort((a,b)=>b.count-a.count);
+
+    const idea = IDEA_LIBRARY[search];
+
+    let trackedHtml = tracked.length
+      ? tracked.map(d => `<div class="ingredient-item"><strong>${escapeHtml(d.name)}</strong><div class="muted">${d.count} appearance${d.count===1?"":"s"} · ${d.seasons.size} season${d.seasons.size===1?"":"s"}</div></div>`).join("")
+      : `<p class="muted">You haven't logged any dishes using this ingredient yet.</p>`;
+
+    let ideaHtml = idea
+      ? `<div class="suggestion-grid">
+          <div class="suggestion-box"><strong>Other dish ideas</strong><div>${idea.dishes.map(x=>`<span class="chip">${escapeHtml(x)}</span>`).join("")}</div></div>
+          <div class="suggestion-box"><strong>Pairs well with</strong><div>${idea.pairs.map(x=>`<span class="chip">${escapeHtml(x)}</span>`).join("")}</div></div>
+        </div>`
+      : `<div class="suggestion-box"><strong>Offline suggestions</strong><p class="muted">No built-in suggestions yet for “${escapeHtml(search)}”. Your tracked MasterChef dishes will still appear above.</p></div>`;
+
+    el.innerHTML = `<h3>${escapeHtml(search.charAt(0).toUpperCase()+search.slice(1))}</h3><p class="muted">Dishes contestants made from this ingredient:</p>${trackedHtml}${ideaHtml}`;
+  }
+
+  function renderLog() {
+    document.getElementById("appearanceCount").textContent = entries.length;
+    document.getElementById("recipeCount").textContent = new Set(entries.map(e=>norm(e.name))).size;
+    document.getElementById("seasonCount").textContent = new Set(entries.map(e=>e.season)).size;
+
+    document.getElementById("logBody").innerHTML = [...entries].reverse().map(e=>`
+      <tr>
+        <td><strong>${escapeHtml(e.name)}</strong></td>
+        <td>${e.season}</td>
+        <td>${e.episode}</td>
+        <td>${escapeHtml(e.challenge)}</td>
+        <td>${escapeHtml(e.ingredient || "—")}</td>
+        <td>${escapeHtml(e.category || "—")}</td>
+        <td><button class="danger" data-delete="${e.id}" type="button">Remove</button></td>
+      </tr>`).join("");
+  }
+
+  function render() {
+    renderRanking();
+    renderExplorer();
+    renderLog();
+  }
+
+  document.getElementById("recipeForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const name = document.getElementById("recipeName").value.trim();
+    const ingredient = document.getElementById("ingredient").value.trim();
+
+    entries.push({
+      id: Date.now(),
+      name,
+      season: Number(document.getElementById("season").value),
+      episode: Number(document.getElementById("episode").value),
+      challenge: document.getElementById("challenge").value,
+      ingredient,
+      category: document.getElementById("category").value
+    });
+
+    saveEntries();
+    render();
+
+    document.getElementById("recipeName").value = "";
+    document.getElementById("message").textContent =
+      ingredient ? `${name} added under ${ingredient}.` : `${name} added successfully.`;
+  });
+
+  document.getElementById("challengeFilter").addEventListener("change", renderRanking);
+  document.getElementById("ingredientSearch").addEventListener("input", renderExplorer);
+
+  document.getElementById("ingredientExplorer").addEventListener("click", event => {
+    const chip = event.target.closest("[data-ingredient]");
+    if (!chip) return;
+    document.getElementById("ingredientSearch").value = chip.dataset.ingredient;
+    renderExplorer();
+  });
+
+  document.getElementById("logBody").addEventListener("click", event => {
+    const button = event.target.closest("[data-delete]");
+    if (!button) return;
+    entries = entries.filter(e => e.id !== Number(button.dataset.delete));
+    saveEntries();
+    render();
+  });
+
+  document.getElementById("clearAll").addEventListener("click", () => {
+    if (!confirm("Delete all saved recipes?")) return;
+    entries = [];
+    saveEntries();
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
